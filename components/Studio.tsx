@@ -7,6 +7,13 @@ import {
   loadHistory,
   prependHistory,
 } from "../lib/history";
+import {
+  Orientation,
+  frameImageToOrientation,
+  orientationAspect,
+  orientationLabel,
+  orientationSize,
+} from "../lib/orientation";
 
 type Status = {
   provider: string;
@@ -36,6 +43,7 @@ export function Studio() {
   const [imageName, setImageName] = useState<string | null>(null);
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
   const [prompt, setPrompt] = useState("");
+  const [orientation, setOrientation] = useState<Orientation>("horizontal");
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -77,10 +85,20 @@ export function Studio() {
     setVideoUrl(null);
 
     try {
+      const framedImage = await frameImageToOrientation(
+        imageDataUrl,
+        orientation,
+      );
+      const size = orientationSize(orientation);
+
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ prompt: prompt.trim(), imageDataUrl }),
+        body: JSON.stringify({
+          prompt: prompt.trim(),
+          imageDataUrl: framedImage,
+          orientation,
+        }),
       });
       const data = (await res.json()) as {
         error?: string;
@@ -102,8 +120,10 @@ export function Studio() {
       } else {
         finalMode = "demo";
         const blob = await renderDemoVideo({
-          imageUrl: imageDataUrl,
+          imageUrl: framedImage,
           durationSec: 3,
+          width: size.width,
+          height: size.height,
           onProgress: setProgress,
         });
         finalUrl = URL.createObjectURL(blob);
@@ -118,6 +138,7 @@ export function Studio() {
         mode: finalMode,
         videoUrl: finalUrl,
         thumbnailUrl: imageDataUrl,
+        orientation,
       };
       setHistory(prependHistory(record));
     } catch (e) {
@@ -125,7 +146,7 @@ export function Studio() {
     } finally {
       setBusy(false);
     }
-  }, [busy, imageDataUrl, prompt]);
+  }, [busy, imageDataUrl, orientation, prompt]);
 
   const download = useCallback(() => {
     if (!videoUrl) return;
@@ -206,8 +227,52 @@ export function Studio() {
           </div>
 
           <div>
+            <p className="mb-3 text-sm text-mist">2. Orientación</p>
+            <div
+              role="radiogroup"
+              aria-label="Orientación del clip"
+              className="grid grid-cols-2 gap-3"
+            >
+              {(["horizontal", "vertical"] as Orientation[]).map((option) => {
+                const selected = orientation === option;
+                return (
+                  <button
+                    key={option}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    onClick={() => setOrientation(option)}
+                    className={`flex items-center gap-3 border px-4 py-3 text-left transition ${
+                      selected
+                        ? "border-copper/60 bg-fog/70 text-copper-bright"
+                        : "border-mist/20 bg-ink/40 text-mist hover:border-mist/40 hover:text-paper"
+                    }`}
+                  >
+                    <span
+                      aria-hidden
+                      className={`shrink-0 border border-current/50 ${
+                        option === "horizontal"
+                          ? "h-4 w-7"
+                          : "h-7 w-4"
+                      }`}
+                    />
+                    <span>
+                      <span className="block text-sm text-paper">
+                        {orientationLabel(option)}
+                      </span>
+                      <span className="block text-xs text-mist/70">
+                        {orientationAspect(option)}
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
             <label htmlFor="prompt" className="mb-3 block text-sm text-mist">
-              2. Prompt de movimiento
+              3. Prompt de movimiento
             </label>
             <textarea
               id="prompt"
@@ -238,7 +303,7 @@ export function Studio() {
             onClick={generate}
             className="brand-mark w-full bg-copper px-6 py-4 text-sm font-semibold text-ink transition hover:bg-copper-bright disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {busy ? "Generando escena…" : "3. Generar clip ~3s"}
+            {busy ? "Generando escena…" : "4. Generar clip ~3s"}
           </button>
 
           {busy ? (
@@ -258,7 +323,13 @@ export function Studio() {
         </div>
 
         <div className="space-y-6">
-          <div className="relative aspect-video overflow-hidden border border-mist/15 bg-ink">
+          <div
+            className={`relative mx-auto w-full overflow-hidden border border-mist/15 bg-ink transition-[aspect-ratio] duration-300 ${
+              orientation === "vertical"
+                ? "aspect-[9/16] max-h-[34rem] max-w-sm"
+                : "aspect-video max-w-full"
+            }`}
+          >
             {videoUrl ? (
               <video
                 key={videoUrl}
@@ -294,9 +365,14 @@ export function Studio() {
             </button>
             {mode ? (
               <span className="text-xs uppercase tracking-[0.18em] text-mist/70">
-                {mode === "api" ? "Generación API" : "Preview demo 3s"}
+                {mode === "api" ? "Generación API" : "Preview demo 3s"} ·{" "}
+                {orientationLabel(orientation)}
               </span>
-            ) : null}
+            ) : (
+              <span className="text-xs uppercase tracking-[0.18em] text-mist/60">
+                {orientationAspect(orientation)}
+              </span>
+            )}
           </div>
 
           {history.length > 0 ? (
@@ -313,6 +389,7 @@ export function Studio() {
                         setVideoUrl(item.videoUrl);
                         setMode(item.mode);
                         setPrompt(item.prompt);
+                        if (item.orientation) setOrientation(item.orientation);
                         if (item.thumbnailUrl) setImageDataUrl(item.thumbnailUrl);
                       }}
                       className="flex w-full items-start gap-3 border border-transparent px-2 py-2 text-left transition hover:border-mist/20 hover:bg-fog/40"
@@ -322,17 +399,31 @@ export function Studio() {
                         <img
                           src={item.thumbnailUrl}
                           alt=""
-                          className="h-12 w-16 shrink-0 object-cover"
+                          className={`shrink-0 object-cover ${
+                            item.orientation === "vertical"
+                              ? "h-14 w-10"
+                              : "h-12 w-16"
+                          }`}
                         />
                       ) : (
-                        <span className="h-12 w-16 shrink-0 bg-fog" />
+                        <span
+                          className={`shrink-0 bg-fog ${
+                            item.orientation === "vertical"
+                              ? "h-14 w-10"
+                              : "h-12 w-16"
+                          }`}
+                        />
                       )}
                       <span className="min-w-0">
                         <span className="line-clamp-2 text-sm text-paper/90">
                           {item.prompt}
                         </span>
                         <span className="mt-1 block text-xs text-mist/60">
-                          {item.mode} · {new Date(item.createdAt).toLocaleString("es")}
+                          {item.mode}
+                          {item.orientation
+                            ? ` · ${orientationLabel(item.orientation)}`
+                            : ""}{" "}
+                          · {new Date(item.createdAt).toLocaleString("es")}
                         </span>
                       </span>
                     </button>

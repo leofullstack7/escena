@@ -1,3 +1,5 @@
+import type { Orientation } from "./orientation";
+
 export type GenerationRecord = {
   id: string;
   prompt: string;
@@ -5,6 +7,7 @@ export type GenerationRecord = {
   mode: "api" | "demo";
   videoUrl: string;
   thumbnailUrl?: string;
+  orientation?: Orientation;
 };
 
 const KEY = "escena.generations.v1";

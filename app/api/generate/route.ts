@@ -7,10 +7,17 @@ export const maxDuration = 120;
 const MAX_PROMPT = 1200;
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 
+type Orientation = "horizontal" | "vertical";
+
 type GenerateBody = {
   prompt?: string;
   imageDataUrl?: string;
+  orientation?: Orientation;
 };
+
+function parseOrientation(value: unknown): Orientation {
+  return value === "vertical" ? "vertical" : "horizontal";
+}
 
 function jsonError(message: string, status: number, extra?: Record<string, unknown>) {
   return Response.json({ error: message, ...extra }, { status });
@@ -45,6 +52,7 @@ export async function POST(request: Request) {
 
   const prompt = (body.prompt ?? "").trim();
   const imageDataUrl = body.imageDataUrl ?? "";
+  const orientation = parseOrientation(body.orientation);
 
   if (!prompt) return jsonError("Escribe un prompt de movimiento.", 400);
   if (prompt.length > MAX_PROMPT) {
@@ -66,6 +74,7 @@ export async function POST(request: Request) {
   if (!falKey) {
     return Response.json({
       mode: "demo" as const,
+      orientation,
       message:
         "Sin FAL_KEY: el cliente genera un preview cinematográfico local de 3s (Ken Burns).",
     });
@@ -105,6 +114,7 @@ export async function POST(request: Request) {
     return Response.json({
       mode: "api" as const,
       videoUrl,
+      orientation,
       provider: "fal/kling-v2.1",
       durationHintSec: 5,
     });
