@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" fill="none">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a332c"/>
+      <stop offset="45%" stop-color="#243f36"/>
+      <stop offset="100%" stop-color="#0e1a16"/>
+    </linearGradient>
+    <radialGradient id="lamp" cx="0.62" cy="0.28" r="0.45">
+      <stop offset="0%" stop-color="#e8c49a" stop-opacity="0.55"/>
+      <stop offset="55%" stop-color="#d4a574" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#0b1210" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="table" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3a2a1c"/>
+      <stop offset="100%" stop-color="#1a120c"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#sky)"/>
+  <rect width="1600" height="900" fill="url(#lamp)"/>
+  <!-- window mullions -->
+  <rect x="980" y="80" width="420" height="420" fill="#0b1210" opacity="0.35"/>
+  <rect x="990" y="90" width="400" height="400" fill="#2a4a40" opacity="0.45"/>
+  <path d="M1190 90 V490 M990 290 H1390" stroke="#0b1210" stroke-width="10" opacity="0.5"/>
+  <!-- table -->
+  <ellipse cx="720" cy="700" rx="520" ry="90" fill="url(#table)"/>
+  <ellipse cx="720" cy="688" rx="500" ry="70" fill="#4a3424" opacity="0.7"/>
+  <!-- plates / glasses suggestion -->
+  <ellipse cx="560" cy="660" rx="70" ry="22" fill="#c8d5ce" opacity="0.25"/>
+  <ellipse cx="720" cy="650" rx="80" ry="24" fill="#c8d5ce" opacity="0.2"/>
+  <ellipse cx="880" cy="665" rx="60" ry="18" fill="#c8d5ce" opacity="0.22"/>
+  <rect x="640" y="610" width="18" height="55" rx="4" fill="#5cb89e" opacity="0.35"/>
+  <rect x="820" y="620" width="16" height="48" rx="4" fill="#e8c49a" opacity="0.4"/>
+  <!-- seated silhouettes -->
+  <path d="M420 620 C450 520 520 500 560 560 C580 500 640 490 660 560 L640 680 Z" fill="#121c18" opacity="0.85"/>
+  <path d="M760 630 C790 530 860 510 900 570 C920 510 980 505 1000 575 L980 690 Z" fill="#15241e" opacity="0.9"/>
+  <!-- film bars -->
+  <rect y="0" width="1600" height="36" fill="#050908" opacity="0.75"/>
+  <rect y="864" width="1600" height="36" fill="#050908" opacity="0.75"/>
+</svg>
